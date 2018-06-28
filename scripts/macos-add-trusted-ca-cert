@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [ -z "$1" ]; then
+  echo "Usage: scripts/macos-add-trusted-ca-cert your-ca-cert.pem" 1>&2
+  exit 1
+fi
+
+echo Adding the CA cert $1 to the system keychain so that every cert signed with it is trusted.
+echo Now, you may be prompted for the sudo password in order to modify the chain...
+
+sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" $1

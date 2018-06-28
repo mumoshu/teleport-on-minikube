@@ -1,0 +1,26 @@
+proxy:
+  tls:
+    enabled: true
+
+config:
+  auth_service:
+    session_recording: "proxy"
+  proxy_service:
+    https_key_file: /var/lib/certs/tls.key
+    https_cert_file: /var/lib/certs/tls.crt
+
+extraVars:
+  # Provide the path to your own CA cert if you would like to use to
+  # validate the certificate chain presented by the proxy
+  SSL_CERT_FILE: "/var/lib/ca-certs/ca.pem"
+
+# Add additional volumes and mounts, for example to read other log files on the host
+extraVolumes:
+  - name: ca-certs
+    configMap:
+      name: ca-certs
+
+extraVolumeMounts:
+  - name: ca-certs
+    mountPath: /var/lib/ca-certs
+    readOnly: true

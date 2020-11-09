@@ -5,4 +5,4 @@ kubectl delete secret license
 kubectl delete secret tls-web
 kubectl delete configmap ca-certs
 rm pki/*
-sudo hostess del teleport.example.com
+sudo hostess rm teleport.example.com

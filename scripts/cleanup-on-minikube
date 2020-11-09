@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-helm delete --purge teleport
+helm delete teleport
 kubectl delete secret license
 kubectl delete secret tls-web
 kubectl delete configmap ca-certs

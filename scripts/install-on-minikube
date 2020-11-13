@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 base_dir=$(cd $(dirname $0); cd ..; pwd)
 
 cd $base_dir
@@ -11,17 +9,32 @@ scripts/create-internal-pki
 cd $base_dir/pki
 
 pushd ..
-kubectl create secret generic license --from-file=license-enterprise.pem
+kubectl get secret license
+if [[ $? -eq 1 ]]; then
+    kubectl create secret generic license --from-file=license-enterprise.pem
+fi
+
 popd
-kubectl create secret tls tls-web --cert=proxy-server.pem --key=proxy-server-key.pem
-kubectl create configmap ca-certs --from-file=ca.pem
+kubectl get secret tls-web
+if [[ $? -eq 1 ]]; then
+    kubectl create secret tls tls-web --cert=proxy-server.pem --key=proxy-server-key.pem
+fi
+    kubectl get configmap ca-certs
+if [[ $? -eq 1 ]]; then
+    kubectl create configmap ca-certs --from-file=ca.pem
+fi
 
 cd $base_dir
 
-helm upgrade --install --reset-values -f minikube.values.yaml --recreate-pods --wait teleport ./
+helm upgrade --install --reset-values -f minikube.values.yaml --atomic --wait teleport ./
 
 pod=$(kubectl get po | grep teleport | grep Running | cut -d' ' -f1)
+echo "POD: $pod"
 
+kubectl delete po $pod
+sleep 5
+
+pod=$(kubectl get po | grep teleport | grep Running | cut -d' ' -f1)
 kubectl exec -it $pod -- bash -c "tctl users add --roles=admin $USER" | tee tctl.log
 
 kubectl port-forward $pod 3022 3023 3024 3025 3026 3080 1>&2 > port-forward.log &
@@ -34,7 +47,12 @@ sudo hostess add teleport.example.com 127.0.0.1
 
 signup_url=$(grep https:// tctl.log)
 
+# If the URL expires because a browser needs an exception to the SSL cert
+# it may work to comment out the `open` line and copy/paste into the browser
+# it took me a few tries to get it to work
+echo $signup_url
 open $signup_url
+
 
 # Use the our own CA cert as the only trusted root CA cert
 # Workaround for https://github.com/gravitational/teleport/issues/2042
